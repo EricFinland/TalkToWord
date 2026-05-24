@@ -1,8 +1,6 @@
-"""Main application — two recording modes, settings GUI, startup support."""
+"""Main application — runs silently in system tray, two recording modes."""
 
 import os
-import sys
-import time
 import threading
 import keyboard
 
@@ -11,7 +9,6 @@ from talktoword.recorder import AudioRecorder
 from talktoword.transcriber import Transcriber
 from talktoword.typer import type_text
 from talktoword.tray import TrayIcon
-from talktoword.overlay import OverlayBar
 from talktoword.settings_gui import SettingsWindow
 
 
@@ -26,10 +23,9 @@ class TalkToWordApp:
             get_mode=lambda: self.cfg["recording_mode"],
             set_mode=self._set_mode,
         )
-        self.overlay: OverlayBar | None = None
         self._running = True
         self._busy = False
-        self._held = False  # tracks whether hotkey is physically held down
+        self._held = False
 
     # ── public ────────────────────────────────────────────────────────
 
@@ -50,11 +46,6 @@ class TalkToWordApp:
 
         hotkey_display = self.cfg["hotkey"].replace("+", " + ").title()
         self.tray.start(hotkey_label=hotkey_display)
-
-        if self.cfg.get("show_overlay", True):
-            self.overlay = OverlayBar()
-            self.overlay.start()
-
         self._bind_hotkey()
 
         mode_desc = (
@@ -73,8 +64,6 @@ class TalkToWordApp:
         self._running = False
         if self.recorder.is_recording:
             self.recorder.stop()
-        if self.overlay:
-            self.overlay.stop()
         self.tray.stop()
         keyboard.unhook_all()
         os._exit(0)
@@ -101,11 +90,9 @@ class TalkToWordApp:
 
     @staticmethod
     def _last_key(hotkey: str) -> str:
-        """Extract the final key from a combo like 'ctrl+shift+space'."""
         return hotkey.split("+")[-1].strip()
 
     def _modifiers_held(self) -> bool:
-        """Check that all modifier keys in the hotkey are currently pressed."""
         parts = [p.strip().lower() for p in self.cfg["hotkey"].split("+")]
         modifiers = parts[:-1]
         for mod in modifiers:
@@ -136,7 +123,7 @@ class TalkToWordApp:
         if self.recorder.is_recording:
             self._stop_and_transcribe()
 
-    # ── toggle mode (press once to start, again to stop) ─────────────
+    # ── toggle mode ──────────────────────────────────────────────────
 
     def _toggle(self) -> None:
         if self._busy:
@@ -151,16 +138,12 @@ class TalkToWordApp:
     def _start_recording(self) -> None:
         print("[TalkToWord] Recording…")
         self.tray.set_recording()
-        if self.overlay:
-            self.overlay.set_recording()
         self.recorder.start()
 
     def _stop_and_transcribe(self) -> None:
         self._busy = True
         wav_data = self.recorder.stop()
         self.tray.set_processing()
-        if self.overlay:
-            self.overlay.set_processing()
         print("[TalkToWord] Transcribing…")
 
         thread = threading.Thread(
@@ -182,8 +165,6 @@ class TalkToWordApp:
             print(f"[TalkToWord] Error: {e}")
         finally:
             self.tray.set_idle()
-            if self.overlay:
-                self.overlay.set_idle()
             self._busy = False
 
     # ── settings ─────────────────────────────────────────────────────
@@ -193,7 +174,6 @@ class TalkToWordApp:
         win.open()
 
     def _apply_settings(self, new_cfg: dict) -> None:
-        """Reload config and rebind hotkeys without full restart."""
         print("[TalkToWord] Settings changed, reloading…")
         old_model = self.cfg["model_size"]
         old_device = self.cfg["device"]
@@ -208,7 +188,6 @@ class TalkToWordApp:
                 device=new_cfg["device"],
             )
 
-        hotkey_display = new_cfg["hotkey"].replace("+", " + ").title()
         self.tray.set_idle()
         mode_desc = (
             "HOLD hotkey to record"
@@ -218,7 +197,6 @@ class TalkToWordApp:
         print(f"[TalkToWord] Reloaded — {mode_desc} ({new_cfg['hotkey']})")
 
     def _set_mode(self, mode: str) -> None:
-        """Quick-switch recording mode from the tray menu."""
         self.cfg["recording_mode"] = mode
         config.save(self.cfg)
         self._bind_hotkey()

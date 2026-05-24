@@ -20,7 +20,6 @@ DEFAULTS = {
     "device": "auto",
     "recording_mode": "hold",   # "hold" or "toggle"
     "run_on_startup": False,
-    "show_overlay": True,
 }
 
 MODEL_OPTIONS = ["tiny", "base", "small", "medium", "large-v3"]

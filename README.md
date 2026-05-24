@@ -19,7 +19,9 @@ That's it. First launch downloads a small model (~150MB, one time only).
 - Or switch to toggle mode: press once to start, again to stop
 - Works in any app — browser, Word, Discord, Slack, whatever
 
-A small floating bar at the top of your screen shows if you're recording.
+Runs silently in the background. Check the system tray (bottom-right, click the ^ caret) to see it's running. The icon changes color: green = ready, red = recording, orange = transcribing.
+
+Right-click the tray icon for settings or to quit.
 
 ## Settings
 
@@ -30,7 +32,6 @@ Right-click the tray icon > **Settings** to change:
 - Model size (bigger = more accurate, slower)
 - Language
 - Run on startup
-- Show/hide the floating bar
 
 ## Use on Another Computer
 

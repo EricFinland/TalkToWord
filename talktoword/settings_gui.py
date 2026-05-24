@@ -91,19 +91,12 @@ class SettingsWindow:
         device_cb.grid(row=row, column=1, sticky="w", pady=6, padx=(8, 0))
         row += 1
 
-        # ── Checkboxes ──
-        self._overlay_var = tk.BooleanVar(value=self._cfg.get("show_overlay", True))
-        ttk.Checkbutton(
-            main, text="Show floating status bar",
-            variable=self._overlay_var,
-        ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(12, 2))
-        row += 1
-
+        # ── Run on startup ──
         self._startup_var = tk.BooleanVar(value=self._cfg.get("run_on_startup", False))
         ttk.Checkbutton(
             main, text="Run TalkToWord on Windows startup",
             variable=self._startup_var,
-        ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(2, 6))
+        ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(12, 6))
         row += 1
 
         # ── Buttons ──
@@ -132,7 +125,6 @@ class SettingsWindow:
             "device": self._device_var.get(),
             "recording_mode": self._mode_var.get(),
             "run_on_startup": self._startup_var.get(),
-            "show_overlay": self._overlay_var.get(),
         }
 
         needs_restart = (
