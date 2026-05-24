@@ -1,4 +1,4 @@
-"""System tray icon for visual status feedback with settings access."""
+"""System tray icon — lives in the ^ caret area, shows app status."""
 
 import threading
 from PIL import Image, ImageDraw
@@ -6,23 +6,13 @@ import pystray
 
 
 class TrayIcon:
-    """Shows a system tray icon that changes color based on recording state."""
+    COLOR_IDLE = "#4CAF50"
+    COLOR_RECORDING = "#F44336"
+    COLOR_PROCESSING = "#FF9800"
 
-    COLOR_IDLE = "#4CAF50"       # green = ready
-    COLOR_RECORDING = "#F44336"  # red = recording
-    COLOR_PROCESSING = "#FF9800" # orange = transcribing
-
-    def __init__(
-        self,
-        on_quit: callable = None,
-        on_settings: callable = None,
-        get_mode: callable = None,
-        set_mode: callable = None,
-    ):
+    def __init__(self, on_quit=None, on_settings=None, **_kwargs):
         self._on_quit = on_quit
         self._on_settings = on_settings
-        self._get_mode = get_mode
-        self._set_mode = set_mode
         self._icon: pystray.Icon | None = None
         self._thread: threading.Thread | None = None
         self._hotkey_label = "Ctrl+Win"
@@ -30,29 +20,13 @@ class TrayIcon:
     def start(self, hotkey_label: str = "Ctrl+Win") -> None:
         self._hotkey_label = hotkey_label
 
-        def is_hold(item):
-            return self._get_mode and self._get_mode() == "hold"
-
-        def is_toggle(item):
-            return self._get_mode and self._get_mode() == "toggle"
-
-        def set_hold(icon, item):
-            if self._set_mode:
-                self._set_mode("hold")
-
-        def set_toggle(icon, item):
-            if self._set_mode:
-                self._set_mode("toggle")
-
         menu = pystray.Menu(
             pystray.MenuItem("TalkToWord", None, enabled=False),
-            pystray.Menu.SEPARATOR,
             pystray.MenuItem(
-                "Recording Mode",
-                pystray.Menu(
-                    pystray.MenuItem("Hold to record", set_hold, checked=is_hold),
-                    pystray.MenuItem("Press to start/stop", set_toggle, checked=is_toggle),
-                ),
+                f"Hold {hotkey_label} to record", None, enabled=False,
+            ),
+            pystray.MenuItem(
+                f"Double-tap to lock recording", None, enabled=False,
             ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Settings…", self._open_settings),
@@ -109,8 +83,7 @@ class TrayIcon:
         r = size // 6
         draw.rounded_rectangle(
             [cx - r, cy - r - 4, cx + r, cy + r - 2],
-            radius=r,
-            fill="white",
+            radius=r, fill="white",
         )
         draw.line([cx, cy + r - 2, cx, cy + r + 6], fill="white", width=3)
         draw.arc(

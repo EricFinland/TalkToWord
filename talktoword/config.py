@@ -18,7 +18,6 @@ DEFAULTS = {
     "model_size": "base",
     "language": "en",
     "device": "auto",
-    "recording_mode": "hold",   # "hold" or "toggle"
     "run_on_startup": False,
 }
 
